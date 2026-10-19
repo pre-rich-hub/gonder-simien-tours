@@ -1,88 +1,79 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "@/components/Image";
-import clientPhotos from "@/lib/client-photos.json";
 import { resolveMediaUrl } from "@/lib/media-url";
 
-const POSTER = clientPhotos["fasilides-bath"].url;
-const VIDEO_ID = "v1789568392/homev";
+const SLIDES = [
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422090/photo_2026-10-19_17-56-23.jpg",
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422090/photo_2026-10-19_17-56-28.jpg",
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422099/photo_2026-10-19_17-57-19.jpg",
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422085/photo_2026-10-19_17-57-12.jpg",
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422086/photo_2026-10-19_17-57-16.jpg",
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422089/photo_2026-10-19_17-57-06.jpg",
+  "https://res.cloudinary.com/ps4gvvqu/image/upload/v1792422084/photo_2026-10-19_17-57-02.jpg",
+] as const;
 
-/** Desktop keeps the wide master; mobile gets a 9:16 center crop so cover framing stays useful. */
-function heroVideoSrc(mobile: boolean) {
-  const transform = mobile
-    ? "q_auto:eco,c_fill,g_center,w_720,h_1280,f_mp4,vc_auto"
-    : "q_auto:eco,c_limit,w_1920,f_mp4,vc_auto";
-  return `https://res.cloudinary.com/ps4gvvqu/video/upload/${transform}/${VIDEO_ID}.mp4`;
-}
+const HOLD_MS = 7000;
 
 export function HomeHeroMedia({ alt }: { alt: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [index, setIndex] = useState(0);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const connection = (navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }).connection;
-    const slow =
-      connection?.saveData ||
-      connection?.effectiveType === "slow-2g" ||
-      connection?.effectiveType === "2g";
+    if (motion.matches) return;
 
-    if (motion.matches || slow) return;
+    setAnimate(true);
+    let timer: ReturnType<typeof setInterval> | null = null;
 
-    const mobile = window.matchMedia("(max-width: 720px)").matches;
-    setVideoSrc(heroVideoSrc(mobile));
+    const stop = () => {
+      if (timer === null) return;
+      clearInterval(timer);
+      timer = null;
+    };
+
+    const start = () => {
+      if (timer !== null) return;
+      timer = setInterval(() => {
+        setIndex((current) => (current + 1) % SLIDES.length);
+      }, HOLD_MS);
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
-  useEffect(() => {
-    if (!videoSrc) return;
-    const video = videoRef.current;
-    if (!video) return;
-
-    const fail = () => setVideoSrc(null);
-    const tryPlay = () => {
-      void video.play().catch(fail);
-    };
-
-    video.addEventListener("error", fail);
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) tryPlay();
-    else video.addEventListener("canplay", tryPlay, { once: true });
-
-    return () => {
-      video.removeEventListener("error", fail);
-      video.removeEventListener("canplay", tryPlay);
-    };
-  }, [videoSrc]);
+  const shown = animate ? SLIDES : SLIDES.slice(0, 1);
 
   return (
     <div className="hero__media">
-      <Image
-        src={resolveMediaUrl(POSTER)}
-        alt={alt}
-        fill
-        priority
-        fetchPriority="high"
-        loading="eager"
-        sizes="100vw"
-      />
-      {videoSrc ? (
-        <video
-          ref={videoRef}
-          className="hero__video"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster={resolveMediaUrl(POSTER)}
-          aria-hidden="true"
-          tabIndex={-1}
+      {shown.map((src, i) => (
+        <div
+          key={src}
+          className={`hero__slide${i === index ? " is-active" : ""}${i % 2 ? " hero__slide--out" : ""}`}
+          aria-hidden={i === 0 ? undefined : true}
         >
-          <source src={videoSrc} type="video/mp4" />
-        </video>
-      ) : null}
+          <Image
+            src={resolveMediaUrl(src)}
+            alt={i === 0 ? alt : ""}
+            fill
+            priority={i === 0}
+            fetchPriority={i === 0 ? "high" : undefined}
+            loading={i <= 1 ? "eager" : undefined}
+            sizes="100vw"
+          />
+        </div>
+      ))}
       <div className="hero__veil" />
       <div className="hero__grain" />
     </div>
