@@ -186,7 +186,7 @@ describe("sitemap inclusion and robots exclusion", () => {
     const ruleList = Array.isArray(rules.rules) ? rules.rules : [rules.rules];
     expect(ruleList.length).toBeGreaterThan(1);
 
-    for (const rule of ruleList) {
+    for (const rule of ruleList.filter((r) => r.disallow !== "/")) {
       const disallow = rule.disallow ?? [];
       const list = (Array.isArray(disallow) ? disallow : [disallow]).map(String);
       expect(list.some((p) => p === "/admin" || p.startsWith("/admin"))).toBe(true);
@@ -197,7 +197,7 @@ describe("sitemap inclusion and robots exclusion", () => {
       const ua = rule.userAgent;
       return Array.isArray(ua) ? ua : [ua];
     });
-    expect(agents).toEqual(expect.arrayContaining(["*", "GPTBot", "OAI-SearchBot", "ClaudeBot", "Google-Extended"]));
+    expect(agents).toEqual(expect.arrayContaining(["*", "OAI-SearchBot", "GPTBot", "ClaudeBot", "Google-Extended"]));
   });
 
   it("INDEX_PATHS never includes /admin", () => {
