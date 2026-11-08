@@ -19,7 +19,10 @@ mediaRouter.get(
     res.set({
       "Content-Type": asset.mimeType,
       "Content-Length": String(asset.size),
-      "Cache-Control": "public, max-age=31536000, immutable",
+      // s-maxage lets the Vercel CDN keep the bytes; without it every view re-runs
+      // this function and counts toward Fast Origin Transfer. Ids are UUIDs, so
+      // the content never changes under the same URL.
+      "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
       "X-Content-Type-Options": "nosniff",
     });
     return res.send(Buffer.from(asset.content));

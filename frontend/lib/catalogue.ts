@@ -75,7 +75,7 @@ const cachedCatalogue = unstable_cache(async (): Promise<CatalogueLoad> => {
     }
     return { ok: false, kind: "network", allowFallback: true };
   }
-}, ["public-catalogue-v2"], { revalidate: 60, tags: ["catalogue"] });
+}, ["public-catalogue-v2"], { revalidate: 3600, tags: ["catalogue"] });
 
 export const getCatalogue = cache(async (): Promise<PublicCatalogue> => {
   const result = await cachedCatalogue();

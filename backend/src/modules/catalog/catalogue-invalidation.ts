@@ -17,7 +17,7 @@ export const catalogueInvalidation: RequestHandler = (req, res, next) => {
         const response = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${secret}` }, signal: AbortSignal.timeout(2000) });
         if (!response.ok) throw new Error("delivery");
       } catch {
-        warning = "Saved. Public cache refresh could not be confirmed; allow up to 60 seconds for refresh.";
+        warning = "Saved. Public cache refresh could not be confirmed; allow up to an hour for refresh.";
         console.warn(JSON.stringify({ event: "catalogue_invalidation_failed", resource: req.path.split("/")[1] }));
       }
       send({ ...(body as object), ...(warning ? { warning } : {}) });

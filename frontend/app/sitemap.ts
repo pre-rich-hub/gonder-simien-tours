@@ -4,7 +4,7 @@ import { routing } from "@/i18n/routing";
 import { absoluteLanguageAlternates, absoluteUrl, localePath, localeFromParam } from "@/lib/seo";
 import { catalogueAlternates } from "@/lib/catalogue-seo";
 import { INDEX_PATHS } from "@/app/sitemap-paths";
-export const revalidate = 60;
+export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const catalogue = await getCatalogue();
   const categories = [...new Set(catalogue.posts.flatMap(p => p.category ? [`/journal/category/${p.category.slug}`] : []))];
